@@ -24,13 +24,14 @@ public class CachedData implements Runnable{
                 data="正在写入文件======="+i;
                 sum+=1;
                 cacheValid=true;
+                System.out.println("正在写入文件========"+i);
             }
             lock.readLock().lock();
             lock.writeLock().unlock();//解锁写锁，必须拿一个读锁
 
         }
 
-        System.out.println("线程"+i+"正在消费data"+data+"消费值======"+sum);
+        System.out.println("线程"+i+Thread.currentThread().getName()+Thread.currentThread().getId()+"已经消费data"+data+"消费值======"+sum);
         lock.readLock().unlock();
 
     }
