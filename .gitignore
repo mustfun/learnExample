@@ -33,5 +33,4 @@ gen
 .gitignore
 .idea/inspectionProfiles/
 .idea/workspace.xml
-Api/src/
 target/
