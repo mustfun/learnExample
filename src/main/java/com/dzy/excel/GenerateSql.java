@@ -17,8 +17,12 @@ public class GenerateSql {
     private StringBuffer columName;
     private String columType;
     private String commment;
+    private String tablZhCnName;
+    private String indexName="";
 
     public void readFromExcelAndGenerateSql(int sheetNum) {
+        tablZhCnName="";
+        indexName="";
         Sheet sheet;
         Workbook book;
         Cell cell1, cell2, cell3;
@@ -32,6 +36,10 @@ public class GenerateSql {
 
             int row=sheet.getRows();
             for (int i=1;i<row ;i++ ) {
+                if(i==row-1){
+                    tablZhCnName=sheet.getCell(0, i).getContents();
+                    continue;
+                }
                 columName=new StringBuffer();
                 // 获取每一行的单元格
                 cell1 = sheet.getCell(0, i);// （列，行）
@@ -58,17 +66,23 @@ public class GenerateSql {
 
                 columType=cell2.getContents();
                 if (columType.startsWith("decimal")){
-                    columType="decimal(16,4)  NOT NULL DEFAULT 0";
+                    columType="decimal(16,4)  NOT NULL DEFAULT 0.0000";
                 }else if (columType.startsWith("int")&&!replace1.contains("id")){
                     columType="int(11)  NOT NULL DEFAULT 0";
                 }else if(columType.startsWith("smallint")){
                     columType="smallint(6) NOT NULL DEFAULT 0";
                 }else if(replace1.contains("id")){
                     columType="bigint(20) NOT NULL ";
-                }else if(replace1.equals("create_time")||replace1.equals("update_time")){
+                }else if(replace1.equals("create_time")){
                     columType=columType+" NOT NULL DEFAULT CURRENT_TIMESTAMP";
+                }else if(replace1.equals("update_time")){
+                    columType=columType+" NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP";
+                }else if(replace1.equals("create_by")||replace1.equals("update_by")){
+                    columType=" bigint(20) NOT NULL";
                 }else if(columType.startsWith("varchar")||columType.startsWith("nvarchar")){
                     columType=columType+" NOT NULL DEFAULT ''";
+                }else if(columType.startsWith("json")){
+                    columType="json NOT NULL";
                 }else{
                     columType=columType+" DEFAULT NULL";
                 }
@@ -82,10 +96,12 @@ public class GenerateSql {
                             + columType + "\t  COMMENT '" + commment+"', \n");
                 }
 
-
+                if (!replace1.startsWith("id")&&replace1.contains("id")){
+                    indexName=indexName+",\n  KEY `idx_"+replace1+"`(`"+replace1+"`) using btree";
+                }
 
             }
-            thelastSql+="PRIMARY KEY (`id`) \n) ENGINE=InnoDB DEFAULT CHARSET=utf8;";
+            thelastSql+="PRIMARY KEY (`id`)"+indexName+" \n) ENGINE=InnoDB DEFAULT CHARSET=utf8 comment='"+tablZhCnName+"';";
             System.out.println(thelastSql);
             book.close();
         } catch (Exception e) {
@@ -96,6 +112,14 @@ public class GenerateSql {
 
     public static void main(String[] args) {
         GenerateSql fileService=new GenerateSql();
-        fileService.readFromExcelAndGenerateSql(3);
+        for (int i=0;i<11;i++) {
+            fileService.readFromExcelAndGenerateSql(i);
+            System.out.println();
+            System.out.println();
+            System.out.println("#################################################");
+            System.out.println();
+            System.out.println();
+        }
+
     }
 }
